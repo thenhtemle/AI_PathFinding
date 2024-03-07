@@ -17,47 +17,43 @@ min_value_threshold = 0
 
 found = False
 while len(wait_list) != 0 and not found:
-    val, h, p, par = heapq.heappop(wait_list)
-    if not graph.is_explored(p):
-        graph.set_parent(p, par)
-    else:
+    f, h, p, par = heapq.heappop(wait_list)
+    if graph.is_explored(p):
         continue
 
+    graph.set_parent(p, par)
     expanded = graph.expand(p)
     if expanded is None:
         found = True
         break
 
-    g = val - h + 1
+    g = f - h + 1
     dfs_stack = []
-    min_value_threshold = max(val, min_value_threshold)
+    min_value_threshold = max(f, min_value_threshold)
 
     for new_p in expanded[0] + expanded[1]:
-        h = graph.hueristic(new_p)
-        dfs_stack.append((g + h, h, new_p, p))
+        dfs_stack.append((g, new_p, p))
 
     while len(dfs_stack) != 0:
-        val, h, p, par = dfs_stack.pop()
+        g, p, par = dfs_stack.pop()
+        h = graph.hueristic(p)
 
-        if val > min_value_threshold:
-            heapq.heappush(wait_list, (val, h, p, par))
+        if g + h > min_value_threshold:
+            heapq.heappush(wait_list, (g + h, h, p, par))
             continue
 
-        if not graph.is_explored(p):
-            graph.set_parent(p, par)
-        else:
+        if graph.is_explored(p):
             continue
 
+        graph.set_parent(p, par)
         expanded = graph.expand(p)
 
         if expanded is None:
             found = True
             break
 
-        g = val - h + 1
         for new_p in expanded[0] + expanded[1]:
-            h = graph.hueristic(new_p)
-            dfs_stack.append((g + h, h, new_p, p))
+            dfs_stack.append((g + 1, new_p, p))
 
 
 if not found:
