@@ -117,7 +117,7 @@ class Graph:
 
         self.__dfs_polygon(avr_x, avr_y)
 
-    #Hàm tạo: nhận 2 tham số là tên file input và tên thuật toán được sử dụng
+    # Hàm tạo: nhận 2 tham số là tên file input và tên thuật toán được sử dụng
     def __init__(self, input_path: str, algorithm: str = ""):
         with open(input_path, "r") as file_buffer:
             m, n = map(int, file_buffer.readline().split(","))
@@ -201,6 +201,20 @@ class Graph:
         self.__im.set_array(self.__states[cur_frame])
         return [self.__im]
 
+    def __output_animation(self):
+        anim = animation.FuncAnimation(
+            self.__map,
+            self.__animation_func,
+            len(self.__states),
+            interval=10,  # in ms
+            # blit=True,
+        )
+
+        pyplot.title(self.__algorithm)
+        output_file = rf"{self.__algorithm}.gif"
+        anim.save(output_file, writer="pillow")
+        print(f"Animation saved to {output_file}.")
+
     def __display(self):
         self.__visited += 1
         shorted_len = 0
@@ -218,23 +232,14 @@ class Graph:
         print(f"Path length: {shorted_len}.")
         print(f"Visited: {self.__visited} nodes.")
 
-        anim = animation.FuncAnimation(
-            self.__map,
-            self.__animation_func,
-            len(self.__states),
-            interval=10,  # in ms
-            # blit=True,
-        )
+        self.__output_animation()
 
-        pyplot.title(self.__algorithm)
-        pyplot.show()
+    # Hàm expand: nhận 1 tham số là cặp số (tuple) x, y chứa vị trí muốn expand. Hàm trả về 2 mảng: các vị trí đã được expand và các vị trí đã ở frontier.
+    # Hàm có thể không trả gì nếu đã tìm thấy đích. Lúc đó, hàm này sẽ output ra kết quả.
+    # Hàm throw exception nếu vị trí đó đã được expanded.
+    # Hàm mặc định gắn parent của các đỉnh của mảng trả về đầu tiên là vị trí truyền vào tham số.
 
-    #Hàm expand: nhận 1 tham số là cặp số (tuple) x, y chứa vị trí muốn expand. Hàm trả về 2 mảng: các vị trí đã được expand và các vị trí đã ở frontier.
-    #Hàm có thể không trả gì nếu đã tìm thấy đích. Lúc đó, hàm này sẽ output ra kết quả. 
-    #Hàm throw exception nếu vị trí đó đã được expanded.
-    #Hàm mặc định gắn parent của các đỉnh của mảng trả về đầu tiên là vị trí truyền vào tham số.
-        
-    #Hàm expand: không nhận tham số: khi đó hàm sẽ expand đỉnh đầu và vẫn trả về 2 mảng các vị trí đã được expand
+    # Hàm expand: không nhận tham số: khi đó hàm sẽ expand đỉnh đầu và vẫn trả về 2 mảng các vị trí đã được expand
     def expand(self, p: tuple | None = None) -> list[tuple] | None:
         if p is None or p == self.__start:
             x, y = self.__start
@@ -272,7 +277,7 @@ class Graph:
         self.__states.append(self.__grid.copy())
         return (expanded, frontier)
 
-    #Hàm set_parent: nhận 2 tham số là vị trí cần thay đổi pos và giá trị thay đổi par. Khi đó, đỉnh trước pos sẽ được chỉnh thành par
+    # Hàm set_parent: nhận 2 tham số là vị trí cần thay đổi pos và giá trị thay đổi par. Khi đó, đỉnh trước pos sẽ được chỉnh thành par
     def set_parent(self, pos: tuple, parent: tuple) -> None:
         x, y = pos
         dx = abs(x - parent[0])
@@ -289,11 +294,11 @@ class Graph:
 
         self.__parent[x][y] = parent
 
-    #Hàm get_start: trả về điểm bắt đầu của đồ thị
+    # Hàm get_start: trả về điểm bắt đầu của đồ thị
     def get_start(self) -> tuple:
         return self.__start
 
-    #Hàm get_goal: trả về điểm đích của đồ thị
+    # Hàm get_goal: trả về điểm đích của đồ thị
     def get_goal(self) -> tuple:
         return self.__goal
 
@@ -302,13 +307,13 @@ class Graph:
             p == self.__start or self.__grid[p[0]][p[1]] == Graph.Status.EXPLORED.value
         )
 
-    #Hàm heuristic: nhận 1 tham số là cặp số (tuple) x, y muốn tìm giá trị heuristic, là khoảng cách Mahattan giữa điểm đó và điểm đích
+    # Hàm heuristic: nhận 1 tham số là cặp số (tuple) x, y muốn tìm giá trị heuristic, là khoảng cách Mahattan giữa điểm đó và điểm đích
     def hueristic(self, p: tuple) -> int:
         x, y = p
         end_x, end_y = self.__goal
         return abs(x - end_x) + abs(y - end_y)
 
-    #Hàm give_up: không nhận tham số, chỉ sử dụng khi chắc chắn là không tồn tại đường đi
+    # Hàm give_up: không nhận tham số, chỉ sử dụng khi chắc chắn là không tồn tại đường đi
     def give_up(self) -> None:
         print(f"Algorithm: {self.__algorithm}.")
         print("No path found.")
@@ -318,8 +323,7 @@ class Graph:
             self.__map,
             self.__animation_func,
             len(self.__states),
-            interval=1,  # in ms
+            interval=10,  # in ms
         )
 
-        pyplot.title(self.__algorithm)
-        pyplot.show()
+        self.__output_animation()

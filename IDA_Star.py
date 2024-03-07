@@ -2,7 +2,7 @@ import Graph
 import heapq
 
 
-graph = Graph.Graph("input2.txt", "IDA*")
+graph = Graph.Graph("input2.txt", "IDA_Star")
 wait_list = []
 start = graph.get_start()
 expanded = graph.expand()
