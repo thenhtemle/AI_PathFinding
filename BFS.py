@@ -8,6 +8,7 @@ found: bool = False
 
 queue = [(p, graph.get_start()) for p in graph.expand()[0]]
 
+
 while len(queue) != 0: 
     p, par = queue.pop(0)  
     if graph.is_explored(p):  
