@@ -214,6 +214,7 @@ class Graph:
         output_file = rf"{self.__algorithm}.gif"
         anim.save(output_file, writer="pillow")
         print(f"Animation saved to {output_file}.")
+        pyplot.close()
 
     def __display(self):
         self.__visited += 1
@@ -318,12 +319,5 @@ class Graph:
         print(f"Algorithm: {self.__algorithm}.")
         print("No path found.")
         print(f"Visited: {self.__visited} nodes.")
-
-        anim = animation.FuncAnimation(
-            self.__map,
-            self.__animation_func,
-            len(self.__states),
-            interval=10,  # in ms
-        )
 
         self.__output_animation()
