@@ -1,30 +1,25 @@
 import Graph
 from collections import deque
 
-graph = Graph.Graph(
-    "input.txt", "BFS"
-)  
+graph = Graph.Graph("input3.txt", "BFS")
+
+
+expanded = graph.expand()
+if graph is None:
+    quit()
+queue = deque(expanded[0])
 
 found: bool = False
+while queue:
+    p = queue.popleft()
+    expanded = graph.expand(p)
 
-queue = [(p, graph.get_start()) for p in graph.expand()[0]]
-
-while queue:  
-    p, par = queue.popleft()  
-    if graph.is_explored(p): 
-        continue
-
-    graph.set_parent(p, par)  
-    expanded = graph.expand(p)  
-
-    if expanded is None:  
+    if expanded is None:
         found = True
         break
 
-    for new_p in (
-        expanded[0] + expanded[1]
-    ):  
-        queue.append((new_p, p))
+    for new_p in expanded[0]:
+        queue.append(new_p)
 
-if not found:  
+if not found:
     graph.give_up()
