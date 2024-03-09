@@ -92,10 +92,3 @@ class Graph:
         print('Path does not exist!')
         return None
     
-adjac_lis = {
-        'A': [('B', 1), ('C', 3), ('D', 7)],
-        'B': [('D', 5)],
-        'C': [('D', 12)]
-    }
-graph1 = Graph(adjac_lis)
-graph1.a_star_algorithm('A', 'D')
