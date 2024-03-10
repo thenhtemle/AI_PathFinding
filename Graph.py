@@ -281,6 +281,11 @@ class Graph:
     # Hàm set_parent: nhận 2 tham số là vị trí cần thay đổi pos và giá trị thay đổi par. Khi đó, đỉnh trước pos sẽ được chỉnh thành par
     def set_parent(self, pos: tuple, parent: tuple) -> None:
         x, y = pos
+
+        if pos == parent:
+            self.__parent[x][y] = parent
+            return
+
         dx = abs(x - parent[0])
         dy = abs(y - parent[1])
 

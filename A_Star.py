@@ -1,5 +1,6 @@
 from Graph import Graph
 
+
 graph = Graph("input.txt", "A_Star")
 start = graph.get_start()
 f = {start: (0,0)}
