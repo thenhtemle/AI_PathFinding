@@ -1,4 +1,4 @@
-import Graph
+import CSC14003.AI_PathFinding.Level1_2.Graph as Graph
 from collections import deque
 
 graph = Graph.Graph("input3.txt", "BFS")

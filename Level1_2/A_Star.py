@@ -1,4 +1,4 @@
-from Graph import Graph
+from CSC14003.AI_PathFinding.Level1_2.Graph import Graph
 
 
 graph = Graph("input.txt", "A_Star")
