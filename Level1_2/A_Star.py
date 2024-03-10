@@ -1,9 +1,19 @@
-from CSC14003.AI_PathFinding.Level1_2.Graph import Graph
+from Graph import Graph
 
 
-graph = Graph("input.txt", "A_Star")
+input_path = None
+graph = None
+
+
+try:
+    input_path = input("Enter the name of the input file: ")
+    graph = Graph(input_path, "A_Star")
+except Exception as e:
+    print(repr(e))
+    quit()
+
 start = graph.get_start()
-f = {start: (0,0)}
+f = {start: (0, 0)}
 par = {start: start}
 found = False
 

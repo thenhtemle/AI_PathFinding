@@ -1,8 +1,19 @@
-import CSC14003.AI_PathFinding.Level1_2.Graph as Graph
+from Graph import Graph
 import heapq
 
 
-graph = Graph.Graph("input2.txt", "IDA_Star")
+input_path = None
+graph = None
+
+
+try:
+    input_path = input("Enter the name of the input file: ")
+    graph = Graph(input_path, "A_Star")
+except Exception as e:
+    print(repr(e))
+    quit()
+
+
 wait_list = []
 start = graph.get_start()
 expanded = graph.expand()

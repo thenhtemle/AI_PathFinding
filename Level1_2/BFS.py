@@ -1,11 +1,21 @@
-import CSC14003.AI_PathFinding.Level1_2.Graph as Graph
+from Graph import Graph
 from collections import deque
 
-graph = Graph.Graph("input3.txt", "BFS")
+
+input_path = None
+graph = None
+
+
+try:
+    input_path = input("Enter the name of the input file: ")
+    graph = Graph(input_path, "BFS")
+except Exception as e:
+    print(repr(e))
+    quit()
 
 
 expanded = graph.expand()
-if graph is None:
+if expanded is None:
     quit()
 queue = deque(expanded[0])
 

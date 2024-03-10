@@ -2,7 +2,6 @@ from enum import Enum
 import numpy as np
 from matplotlib import pyplot, colors
 import matplotlib.animation as animation
-from matplotlib.ticker import MaxNLocator
 from time import sleep
 
 
@@ -118,11 +117,12 @@ class Graph:
         self.__dfs_polygon(avr_x, avr_y)
 
     # Hàm tạo: nhận 2 tham số là tên file input và tên thuật toán được sử dụng
-    def __init__(self, input_path: str, algorithm: str = ""):
+    def __init__(self, input_path: str, algorithm: str):
         with open(input_path, "r") as file_buffer:
             m, n = map(int, file_buffer.readline().split(","))
             self.__n, self.__m = n, m
             self.__algorithm = algorithm
+
             self.__map = pyplot.figure(figsize=(6, 6))
             # self.__map.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
             # self.__map.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
@@ -195,6 +195,9 @@ class Graph:
             self.__visited = 1
             self.__states = [self.__grid.copy()]
 
+            output_path = input("Enter the name of the output file (no extension): ")
+            self.__output_path = algorithm if len(output_path) == 0 else output_path
+
     def __animation_func(self, cur_frame: int):
         if cur_frame == 1:
             sleep(0.5)
@@ -211,7 +214,7 @@ class Graph:
         )
 
         pyplot.title(self.__algorithm)
-        output_file = rf"{self.__algorithm}.gif"
+        output_file = rf"{self.__output_path}.gif"
         anim.save(output_file, writer="pillow")
         print(f"Animation saved to {output_file}.")
         pyplot.close()
@@ -241,7 +244,7 @@ class Graph:
     # Hàm mặc định gắn parent của các đỉnh của mảng trả về đầu tiên là vị trí truyền vào tham số.
 
     # Hàm expand: không nhận tham số: khi đó hàm sẽ expand đỉnh đầu và vẫn trả về 2 mảng các vị trí đã được expand
-    def expand(self, p: tuple | None = None) -> list[tuple] | None:
+    def expand(self, p: tuple | None = None) -> tuple | None:
         if p is None or p == self.__start:
             x, y = self.__start
             if self.__grid[x][y] != Graph.Status.START.value:
