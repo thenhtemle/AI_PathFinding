@@ -8,7 +8,7 @@ graph = None
 
 try:
     input_path = input("Enter the name of the input file: ")
-    graph = Graph(input_path, "A_Star")
+    graph = Graph(input_path, "IDA_Star")
 except Exception as e:
     print(repr(e))
     quit()
