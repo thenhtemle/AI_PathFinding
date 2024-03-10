@@ -189,10 +189,10 @@ class Graph:
                 num_of_stops += 1
                 i += 2
 
-            num_of_obs = int(file_buffer.readline())
-            for _ in range(num_of_obs):
-                obs_vertices = list(map(int, file_buffer.readline().split(",")))
-                self.__check_polygon(obs_vertices)
+            self.num_of_obs = int(file_buffer.readline())
+            for _ in range(self.num_of_obs):
+                self.obs_vertices = list(map(int, file_buffer.readline().split(",")))
+                self.__check_polygon(self.obs_vertices)
 
             self.__im = pyplot.imshow(
                 self.__grid,
@@ -208,6 +208,8 @@ class Graph:
             self.__map.gca().invert_yaxis()
             self.__visited = 1
             self.__states = [self.__grid.copy()]
+
+            self.__other = self.__grid.copy()
 
     def __animation_func(self, cur_frame: int):
         if cur_frame == 1:
@@ -309,13 +311,23 @@ class Graph:
 
         self.__parent[x][y] = parent
 
+    # Hàm get_visited: trả về số lượng các đỉnh đã được visited
+    def get_visited(self) -> int:
+        return self.__visited
+    
     # Hàm get_start: trả về điểm bắt đầu của đồ thị
     def get_start(self) -> tuple:
         return self.__start
+    
+    def set_start(self, start: tuple) -> None:
+        self.__start = start
 
     # Hàm get_goal: trả về điểm đích của đồ thị
     def get_goal(self) -> tuple:
         return self.__goal
+    
+    def set_goal(self, goal: tuple) -> None:
+        self.__goal = goal
     
     # Hàm get_stops: trả về danh sách các điểm dừng của đồ thị
     def get_stops(self) -> list[tuple]:
@@ -344,3 +356,7 @@ class Graph:
         print(f"Visited: {self.__visited} nodes.")
 
         self.__output_animation()
+        
+    
+    def reset(self):
+        return self.__other
