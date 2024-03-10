@@ -311,23 +311,28 @@ class Graph:
 
         self.__parent[x][y] = parent
 
-    # Hàm get_visited: trả về số lượng các đỉnh đã được visited
-    def get_visited(self) -> int:
-        return self.__visited
     
     # Hàm get_start: trả về điểm bắt đầu của đồ thị
     def get_start(self) -> tuple:
         return self.__start
     
     def set_start(self, start: tuple) -> None:
+        old_x, old_y = self.__start
+        new_x, new_y = start
+        self.__grid[old_x][old_y] = Graph.Status.UNEXPLORED.value
         self.__start = start
+        self.__grid[new_x][new_y] = Graph.Status.START.value
 
     # Hàm get_goal: trả về điểm đích của đồ thị
     def get_goal(self) -> tuple:
         return self.__goal
     
     def set_goal(self, goal: tuple) -> None:
+        old_x, old_y = self.__goal
+        new_x, new_y = goal
+        self.__grid[old_x][old_y] = Graph.Status.UNEXPLORED.value
         self.__goal = goal
+        self.__grid[new_x][new_y] = Graph.Status.START.value
     
     # Hàm get_stops: trả về danh sách các điểm dừng của đồ thị
     def get_stops(self) -> list[tuple]:
@@ -343,11 +348,27 @@ class Graph:
             p == self.__start or self.__grid[p[0]][p[1]] == Graph.Status.EXPLORED.value
         )
 
-    # Hàm heuristic: nhận 1 tham số là cặp số (tuple) x, y muốn tìm giá trị heuristic, là khoảng cách Mahattan giữa điểm đó và điểm đích
-    def hueristic(self, p: tuple) -> int:
-        x, y = p
-        end_x, end_y = self.__goal
-        return abs(x - end_x) + abs(y - end_y)
+    def distance(self, p1: tuple, p2: tuple) -> tuple:
+        x1, y1  = p1
+        x2, y2 = p2
+
+        path_way = [[]]
+        path_distance = 0
+
+        while (x1, y1) != (x2, y2):
+            path_way.append((x1, x2))
+            path_distance += 1
+            self.__grid[x1][y1] = Graph.Status.PATH.value
+            self.__states.append(self.__grid.copy())
+            x1, y1 = self.__parent[x1][y1]
+
+        self.__grid[x1][y1] = Graph.Status.PATH.value
+        self.__states.append(self.__grid.copy())
+
+        path_way.reverse()
+
+        return (path_distance, path_way)
+
 
     # Hàm give_up: không nhận tham số, chỉ sử dụng khi chắc chắn là không tồn tại đường đi
     def give_up(self) -> None:
