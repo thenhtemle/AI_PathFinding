@@ -38,7 +38,7 @@ shortest_length = 0
 #Duyệt qua từng hoán vị
 for perm in permutations:
     #Reset lại trạng thái của graph
-    graph = Graph.Graph("input.txt", "BFS_Advanced")
+    graph.reset()
 
     current_length = 0
     
