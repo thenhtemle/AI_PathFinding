@@ -1,9 +1,7 @@
 from enum import Enum
-from shutil import move
 import numpy as np
 from matplotlib import pyplot, colors
 import matplotlib.animation as animation
-from time import sleep
 
 
 class Graph:
@@ -27,6 +25,10 @@ class Graph:
         def sign(x: int) -> int:
             return 1 if x > 0 else -1
 
+        if self.__other_grid[x + dx][y + dy] > 0:
+            raise ValueError("Invalid movement.")
+        self.__other_grid[x + dx][y + dy] = Graph.Status.OBSTACLE.value
+
         if dy == 0:
             sign_x = sign(dx)
             for new_x in range(x, x + dx + sign_x, sign_x):
@@ -38,21 +40,58 @@ class Graph:
                 ):
                     raise ValueError("Invalid movement.")
                 self.__movement_matrix[new_x][y] = True
-        
-            self.__other_grid[x + dx][y] = Graph.Status.OBSTACLE.value
+
             return
 
-        # for i in range(x, x + self.__movement + dx, dx):
-        #     cur = self.__grid[i][y]
-        #     if (
-        #         cur == Graph.Status.START.value
-        #         or cur == Graph.Status.GOAL.value
-        #         or cur == Graph.Status.WALL.value
-        #     ):
-        #         raise ValueError("Invalid movement.")
+        if dx == 0:
+            sign_y = sign(dy)
+            for new_y in range(y, y + dy + sign_y, sign_y):
+                cur = self.__grid[x][new_y]
+                if (
+                    cur == Graph.Status.START.value
+                    or cur == Graph.Status.GOAL.value
+                    or cur == Graph.Status.WALL.value
+                ):
+                    raise ValueError("Invalid movement.")
+                self.__movement_matrix[x][new_y] = True
 
-        #     self.__movement_matrix[i][y] = True
-        # self.__other_grid[x + self.__movement][y] = Graph.Status.OBSTACLE.value
+            return
+
+        slope = dy / dx
+        if abs(slope) > 1:
+            sdy = sign(dy)
+            slope = dy / slope
+            xx = x
+
+            for new_y in range(y, y + dy + sdy, sdy):
+                x = round(xx)
+                cur = self.__grid[x][new_y]
+                if (
+                    cur == Graph.Status.START.value
+                    or cur == Graph.Status.GOAL.value
+                    or cur == Graph.Status.WALL.value
+                ):
+                    raise ValueError("Invalid movement.")
+                self.__movement_matrix[x][new_y] = True
+
+                xx += slope
+        else:
+            sdx = sign(dx)
+            slope = dx * slope
+            yy = y
+
+            for new_x in range(x, x + dx + sdx, sdx):
+                y = round(yy)
+                cur = self.__grid[new_x][y]
+                if (
+                    cur == Graph.Status.START.value
+                    or cur == Graph.Status.GOAL.value
+                    or cur == Graph.Status.WALL.value
+                ):
+                    raise ValueError("Invalid movement.")
+                self.__movement_matrix[new_x][y] = True
+
+                yy += slope
 
     def __draw_edge(
         self, x1: int, y1: int, x2: int, y2: int, move_x: int, move_y: int
@@ -133,17 +172,21 @@ class Graph:
         cnt = len(obs_vertices)
         dy, dx = movement
 
-        y_last, x_last = obs_vertices[-1]
+        y_last, x_last = obs_vertices[-2:]
         if (
             not self.__bound_check(x_last, y_last)
             or self.__grid[x_last][y_last] != Graph.Status.UNEXPLORED.value
         ):
             raise ValueError("Obstacle edge overlapped with something.")
 
-        self.__draw_edge(x_last, y_last, obs_vertices[1], obs_vertices[0])
+        self.__draw_edge(x_last, y_last, obs_vertices[1], obs_vertices[0], dx, dy)
         self.__grid[x_last][y_last] = Graph.Status.UNEXPLORED.value
+        self.__other_grid[x_last + dx][y_last + dy] = Graph.Status.UNEXPLORED.value
 
         for i in range(2, cnt, 2):
+            self.__other_grid[obs_vertices[i - 1] + dx][
+                obs_vertices[i - 2] + dy
+            ] = Graph.Status.UNEXPLORED.value
             self.__draw_edge(
                 obs_vertices[i - 1],
                 obs_vertices[i - 2],
@@ -230,7 +273,7 @@ class Graph:
                 movements.append(tuple(map(int, file_buffer.readline().split(","))))
 
             for vertices, movement in zip(obs_vertices, movements):
-                self.__check_polygon(obs_vertices, movement)
+                self.__check_polygon(vertices, movement)
 
             self.__im = pyplot.imshow(
                 self.__grid,
