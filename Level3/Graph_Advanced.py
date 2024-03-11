@@ -322,7 +322,7 @@ class Graph:
         self.__grid[old_x][old_y] = Graph.Status.UNEXPLORED.value
         self.__start = start
         self.__grid[new_x][new_y] = Graph.Status.START.value
-
+    
     # Hàm get_goal: trả về điểm đích của đồ thị
     def get_goal(self) -> tuple:
         return self.__goal
@@ -348,28 +348,24 @@ class Graph:
             p == self.__start or self.__grid[p[0]][p[1]] == Graph.Status.EXPLORED.value
         )
 
-    def distance(self, p1: tuple, p2: tuple) -> tuple:
-        x1, y1  = p1
-        x2, y2 = p2
-
-        path_way = [[]]
-        path_distance = 0
-
-        while (x1, y1) != (x2, y2):
-            path_way.append((x1, x2))
-            path_distance += 1
-            self.__grid[x1][y1] = Graph.Status.PATH.value
-            self.__states.append(self.__grid.copy())
-            x1, y1 = self.__parent[x1][y1]
-
-        self.__grid[x1][y1] = Graph.Status.PATH.value
-        self.__states.append(self.__grid.copy())
-
-        path_way.reverse()
-
-        return (path_distance, path_way)
+    # Hàm heuristic: nhận 1 tham số là cặp số (tuple) x, y muốn tìm giá trị heuristic, là khoảng cách Mahattan giữa điểm đó và điểm đích
+    def hueristic(self, p: tuple) -> int:
+        x, y = p
+        end_x, end_y = self.__goal
+        return abs(x - end_x) + abs(y - end_y)
 
 
+    def get_path(self, p: tuple) -> list[tuple]:
+        path = []
+        x, y = p
+        while (x, y) != self.__start:
+            path.append((x, y))
+            x, y = self.__parent[x][y]
+        path.append(self.__start)
+        path.reverse()
+        return path
+
+    
     # Hàm give_up: không nhận tham số, chỉ sử dụng khi chắc chắn là không tồn tại đường đi
     def give_up(self) -> None:
         print(f"Algorithm: {self.__algorithm}.")
@@ -377,7 +373,7 @@ class Graph:
         print(f"Visited: {self.__visited} nodes.")
 
         self.__output_animation()
-        
+    
     
     def reset(self):
         return self.__other
