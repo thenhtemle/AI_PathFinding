@@ -2,8 +2,8 @@ from enum import Enum
 import numpy as np
 from matplotlib import pyplot, colors
 import matplotlib.animation as animation
-from matplotlib.ticker import MaxNLocator
 from time import sleep
+import heapq
 
 
 class Graph:
@@ -11,14 +11,13 @@ class Graph:
     class Status(Enum):
         UNUSED = -1
         UNEXPLORED = 0
-        EXPLORED = 1
-        FRONTIER = 2
-        WALL = 3
-        OBSTACLE = 4
-        START = 5
-        GOAL = 6
-        PATH = 7
-        STOP = 8
+        WALL = 1
+        OBSTACLE = 2
+        START = 3
+        GOAL = 4
+        PATH = 5
+        STOP = 6
+        CUR_POS = 7
 
     def __bound_check(self, x: int, y: int) -> bool:
         return x > 0 and y > 0 and x <= self.__n and y <= self.__m
@@ -125,12 +124,6 @@ class Graph:
             self.__n, self.__m = n, m
             self.__algorithm = algorithm
             self.__map = pyplot.figure(figsize=(6, 6))
-            # self.__map.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
-            # self.__map.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
-
-            self.__parent = np.array(
-                [np.array([(i, j) for j in range(m + 2)]) for i in range(n + 2)]
-            )
 
             self.__grid = np.array(
                 [
@@ -152,14 +145,13 @@ class Graph:
             colormap = colors.ListedColormap(
                 [
                     "white",
-                    "yellow",
-                    "orange",
                     "grey",
                     "red",
                     "blue",
                     "green",
                     "purple",
                     "brown",
+                    "orange",
                 ]
             )
 
@@ -178,15 +170,15 @@ class Graph:
             self.__start = (start_x, start_y)
             self.__goal = (end_x, end_y)
 
-            #Them diem don
-            num_of_stops = 0
+            # Them diem don
+            self.__stops = []
             i = 4
             while i < len(line_tmp):
-                stop_y, stop_x = map(int, line_tmp[i:i+2])
+                stop_y, stop_x = map(int, line_tmp[i : i + 2])
                 if not self.__bound_check(stop_x, stop_y):
                     raise ValueError("Invalid stop point.")
                 self.__grid[stop_x][stop_y] = Graph.Status.STOP.value
-                num_of_stops += 1
+                self.__stops.append((stop_x, stop_y))
                 i += 2
 
             self.num_of_obs = int(file_buffer.readline())
@@ -206,10 +198,10 @@ class Graph:
             pyplot.yticks(range(0, self.__n + 3))
             pyplot.grid()
             self.__map.gca().invert_yaxis()
-            self.__visited = 1
             self.__states = [self.__grid.copy()]
 
-            self.__other = self.__grid.copy()
+            output_path = input("Enter the name of the output file (no extension): ")
+            self.__output_path = "output" if len(output_path) == 0 else output_path
 
     def __animation_func(self, cur_frame: int):
         if cur_frame == 1:
@@ -217,7 +209,7 @@ class Graph:
         self.__im.set_array(self.__states[cur_frame])
         return [self.__im]
 
-    def __output_animation(self):
+    def output_animation(self):
         anim = animation.FuncAnimation(
             self.__map,
             self.__animation_func,
@@ -226,154 +218,133 @@ class Graph:
             # blit=True,
         )
 
-        pyplot.title(self.__algorithm)
-        output_file = rf"{self.__algorithm}.gif"
+        pyplot.title(f"{self.__algorithm} with stop points.")
+        output_file = rf"{self.__output_path}.gif"
         anim.save(output_file, writer="pillow")
         print(f"Animation saved to {output_file}.")
         pyplot.close()
 
-    def __display(self):
-        self.__visited += 1
-        shorted_len = 0
-
-        x, y = self.__goal
-        while (x, y) != self.__start:
-            shorted_len += 1
-            self.__grid[x][y] = Graph.Status.PATH.value
-            self.__states.append(self.__grid.copy())
-            x, y = self.__parent[x][y]
-        self.__grid[x][y] = Graph.Status.PATH.value
-        self.__states.append(self.__grid.copy())
-
-        print(f"Algorithm: {self.__algorithm}.")
-        print(f"Path length: {shorted_len}.")
-        print(f"Visited: {self.__visited} nodes.")
-
-        self.__output_animation()
-
-    # Hàm expand: nhận 1 tham số là cặp số (tuple) x, y chứa vị trí muốn expand. Hàm trả về 2 mảng: các vị trí đã được expand và các vị trí đã ở frontier.
-    # Hàm có thể không trả gì nếu đã tìm thấy đích. Lúc đó, hàm này sẽ output ra kết quả.
-    # Hàm throw exception nếu vị trí đó đã được expanded.
-    # Hàm mặc định gắn parent của các đỉnh của mảng trả về đầu tiên là vị trí truyền vào tham số.
-
-    # Hàm expand: không nhận tham số: khi đó hàm sẽ expand đỉnh đầu và vẫn trả về 2 mảng các vị trí đã được expand
-    def expand(self, p: tuple | None = None) -> list[tuple] | None:
-        if p is None or p == self.__start:
-            x, y = self.__start
-            if self.__grid[x][y] != Graph.Status.START.value:
-                raise RuntimeError("Start point already expanded.")
-            p = self.__start
-        else:
-            x, y = p
-            if self.__grid[x][y] != Graph.Status.FRONTIER.value:
-                raise RuntimeError("Expanding point not a frontier node.")
-            self.__grid[x][y] = Graph.Status.EXPLORED.value
-
-        x, y = p
-        expanded = []
-        frontier = []
-        for dx, dy in self.__direction:
-            new_x = x + dx
-            new_y = y + dy
-            cur = self.__grid[new_x][new_y]
-
-            if cur == Graph.Status.GOAL.value:
-                self.__parent[new_x][new_y] = p
-                self.__display()
-                return None
-
-            if cur == Graph.Status.FRONTIER.value:
-                frontier.append((new_x, new_y))
-
-            if cur == Graph.Status.UNEXPLORED.value:
-                self.__grid[new_x][new_y] = Graph.Status.FRONTIER.value
-                self.__parent[new_x][new_y] = p
-                expanded.append((new_x, new_y))
-
-        self.__visited += len(expanded)
-        self.__states.append(self.__grid.copy())
-        return (expanded, frontier)
-
-    # Hàm set_parent: nhận 2 tham số là vị trí cần thay đổi pos và giá trị thay đổi par. Khi đó, đỉnh trước pos sẽ được chỉnh thành par
-    def set_parent(self, pos: tuple, parent: tuple) -> None:
-        x, y = pos
-        dx = abs(x - parent[0])
-        dy = abs(y - parent[1])
-
-        if (dx != 0 or dy != 1) and (dx != 1 or dy != 0):
-            raise RuntimeError(f"{parent} is not a parent of {pos}.")
-
-        if (
-            self.__grid[x][y] != Graph.Status.EXPLORED.value
-            and self.__grid[x][y] != Graph.Status.FRONTIER.value
-        ):
-            raise RuntimeError(f"{pos} has not been explored.")
-
-        self.__parent[x][y] = parent
-
-    
     # Hàm get_start: trả về điểm bắt đầu của đồ thị
     def get_start(self) -> tuple:
         return self.__start
-    
-    def set_start(self, start: tuple) -> None:
-        old_x, old_y = self.__start
-        new_x, new_y = start
-        self.__grid[old_x][old_y] = Graph.Status.UNEXPLORED.value
-        self.__start = start
-        self.__grid[new_x][new_y] = Graph.Status.START.value
-    
+
     # Hàm get_goal: trả về điểm đích của đồ thị
     def get_goal(self) -> tuple:
         return self.__goal
-    
-    def set_goal(self, goal: tuple) -> None:
-        old_x, old_y = self.__goal
-        new_x, new_y = goal
-        self.__grid[old_x][old_y] = Graph.Status.UNEXPLORED.value
-        self.__goal = goal
-        self.__grid[new_x][new_y] = Graph.Status.START.value
-    
+
     # Hàm get_stops: trả về danh sách các điểm dừng của đồ thị
     def get_stops(self) -> list[tuple]:
-        stops = []
-        for i in range(1, self.__n + 1):
-            for j in range(1, self.__m + 1):
-                if self.__grid[i][j] == Graph.Status.STOP.value:
-                    stops.append((i, j))
-        return stops
+        return self.__stops
 
-    def is_explored(self, p: tuple) -> bool:
-        return (
-            p == self.__start or self.__grid[p[0]][p[1]] == Graph.Status.EXPLORED.value
-        )
+    def add_state(self) -> None:
+        self.__states.append(self.__grid.copy())
 
-    # Hàm heuristic: nhận 1 tham số là cặp số (tuple) x, y muốn tìm giá trị heuristic, là khoảng cách Mahattan giữa điểm đó và điểm đích
-    def hueristic(self, p: tuple) -> int:
+    def set_path(self, p: tuple) -> None:
         x, y = p
-        end_x, end_y = self.__goal
-        return abs(x - end_x) + abs(y - end_y)
+        if (
+            not self.__bound_check(x, y)
+            or self.__grid[x][y] == Graph.Status.OBSTACLE.value
+            or self.__grid[x][y] == Graph.Status.UNUSED.value
+        ):
+            raise RuntimeError(f"Point ({x} {y}) is inside an obstacle.")
+        self.__grid[x][y] = Graph.Status.PATH.value
 
-
-    def get_path(self, p: tuple) -> list[tuple]:
-        path = []
+    def set_cur_pos(self, p: tuple) -> None:
         x, y = p
-        while (x, y) != self.__start:
-            path.append((x, y))
-            x, y = self.__parent[x][y]
-        path.append(self.__start)
-        path.reverse()
-        return path
+        if (
+            not self.__bound_check(x, y)
+            or self.__grid[x][y] == Graph.Status.OBSTACLE.value
+            or self.__grid[x][y] == Graph.Status.UNUSED.value
+        ):
+            raise RuntimeError(f"Point ({x} {y}) is inside an obstacle.")
+        self.__grid[x][y] = Graph.Status.CUR_POS.value
 
-    
-    # Hàm give_up: không nhận tham số, chỉ sử dụng khi chắc chắn là không tồn tại đường đi
-    def give_up(self) -> None:
-        print(f"Algorithm: {self.__algorithm}.")
-        print("No path found.")
-        print(f"Visited: {self.__visited} nodes.")
+    def find_shortest_path(self, start: tuple, end: tuple) -> tuple | None:
 
-        self.__output_animation()
-    
-    
-    def reset(self):
-        return self.__other
+        start_grid = self.__grid[start[0]][start[1]]
+        end_grid = self.__grid[start[0]][start[1]]
+
+        def check_valid(value: int) -> bool:
+            return (
+                value != Graph.Status.UNUSED.value
+                and value != Graph.Status.OBSTACLE.value
+                and value != Graph.Status.WALL.value
+            )
+
+        if not check_valid(start_grid):
+            raise RuntimeError(f"Invalid start point {start}.")
+
+        if not check_valid(end_grid):
+            raise RuntimeError(f"Invalid start point {end}.")
+
+        temp_grid = self.__grid.copy()
+
+        def heuristic(p: tuple) -> int:
+            return abs(p[0] - end[0]) + abs(p[1] - end[1])
+
+        min_value_threshold = heuristic(start)
+        wait_list = [(min_value_threshold, min_value_threshold, start, start)]
+        parent = {start: start}
+
+        def trace() -> tuple | None:
+            nonlocal end
+            path = [end]
+            while end != start:
+                end = parent[end]
+                path.append(end)
+
+            path.reverse()
+            return (path, len(path) - 1)
+
+        while len(wait_list) != 0:
+            f, h, p, par = heapq.heappop(wait_list)
+            x, y = p
+            if temp_grid[x][y] == Graph.Status.UNUSED.value:
+                continue
+
+            temp_grid[x][y] = Graph.Status.UNUSED.value
+            parent[p] = par
+            min_value_threshold = max(min_value_threshold, f)
+
+            g = f - h + 1
+            dfs_stack = []
+            for dx, dy in self.__direction:
+                new_x = x + dx
+                new_y = y + dy
+
+                new_point = (new_x, new_y)
+                if new_point == end:
+                    parent[end] = p
+                    return trace()
+
+                if check_valid(temp_grid[new_x][new_y]):
+                    dfs_stack.append((g, new_point, p))
+
+            while len(dfs_stack) != 0:
+                g, p, par = dfs_stack.pop()
+                h = heuristic(p)
+
+                if g + h > min_value_threshold:
+                    heapq.heappush(wait_list, (g + h, h, p, par))
+                    continue
+
+                x, y = p
+                if temp_grid[x][y] == Graph.Status.UNUSED.value:
+                    continue
+
+                temp_grid[x][y] = Graph.Status.UNUSED.value
+                parent[p] = par
+
+                for dx, dy in self.__direction:
+                    new_x = x + dx
+                    new_y = y + dy
+
+                    new_point = (new_x, new_y)
+                    if new_point == end:
+                        parent[end] = p
+                        return trace()
+
+                    if check_valid(temp_grid[new_x][new_y]):
+                        dfs_stack.append((g + 1, new_point, p))
+
+        return None
