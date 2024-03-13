@@ -3,8 +3,7 @@ from Graph import Graph
 
 input_path = None
 graph = None
- 
-#hello
+
 try:
     input_path = input("Enter the name of the input file: ")
     graph = Graph(input_path, "A_Star")
