@@ -3,7 +3,6 @@ import numpy as np
 from matplotlib import pyplot, colors
 import matplotlib.animation as animation
 
-
 class Graph:
 
     class Status(Enum):
