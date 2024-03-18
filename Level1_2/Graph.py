@@ -193,6 +193,7 @@ class Graph:
             pyplot.grid()
             self.__map.gca().invert_yaxis()
             self.__visited = 1
+            self.__opened = int(algorithm == "A_Star")
             self.__states = [self.__grid.copy()]
 
             output_path = input("Enter the name of the output file (no extension): ")
@@ -220,7 +221,6 @@ class Graph:
         pyplot.close()
 
     def __display(self):
-        self.__visited += 1
         shorted_len = 0
 
         x, y = self.__goal
@@ -234,7 +234,9 @@ class Graph:
 
         print(f"Algorithm: {self.__algorithm}.")
         print(f"Path length: {shorted_len}.")
-        print(f"Visited: {self.__visited} nodes.")
+        print(
+            f"Visited: {self.__visited} nodes ({self.__opened} opened nodes, {self.__visited - self.__opened} frontiers)."
+        )
 
         self.__output_animation()
 
@@ -256,6 +258,7 @@ class Graph:
                 raise RuntimeError("Expanding point not a frontier node.")
             self.__grid[x][y] = Graph.Status.EXPLORED.value
 
+        self.__opened += 1
         x, y = p
         expanded = []
         frontier = []
@@ -266,6 +269,7 @@ class Graph:
 
             if cur == Graph.Status.GOAL.value:
                 self.__parent[new_x][new_y] = p
+                self.__visited += len(expanded)
                 self.__display()
                 return None
 
@@ -326,6 +330,6 @@ class Graph:
     def give_up(self) -> None:
         print(f"Algorithm: {self.__algorithm}.")
         print("No path found.")
-        print(f"Visited: {self.__visited} nodes.")
+        print(f"Opened: {self.__visited} nodes.")
 
         self.__output_animation()

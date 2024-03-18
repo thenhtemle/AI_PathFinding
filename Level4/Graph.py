@@ -3,6 +3,7 @@ import numpy as np
 from matplotlib import pyplot, colors
 import matplotlib.animation as animation
 
+
 class Graph:
 
     class Status(Enum):
@@ -287,6 +288,7 @@ class Graph:
             pyplot.grid()
             self.__map.gca().invert_yaxis()
             self.__visited = 1
+            self.__frontier = 0
             self.__shortest_path = 1
             self.__states = [self.__grid.copy()]
 
@@ -315,7 +317,6 @@ class Graph:
         pyplot.close()
 
     def __display(self):
-        self.__visited += 1
         shorted_len = self.__shortest_path
 
         x, y = self.__goal
@@ -336,7 +337,9 @@ class Graph:
 
         print(f"BFS with moving obstacles.")
         print(f"Path length: {self.__shortest_path}.")
-        print(f"Visited: {self.__visited} nodes.")
+        print(
+            f"Visited: {self.__visited} nodes ({self.__visited - self.__frontier} opened nodes, {self.__frontier} frontiers)."
+        )
 
         self.__output_animation()
 
@@ -354,6 +357,9 @@ class Graph:
 
             self.__parent[new_x][new_y] = self.__start
             if self.__other_grid[new_x][new_y] == Graph.Status.GOAL.value:
+                for f_x, f_y in frontier:
+                    self.__grid[f_x][f_y] = Graph.Status.FRONTIER.value
+                self.__frontier = len(frontier)
                 self.__display()
                 return
 
@@ -366,8 +372,11 @@ class Graph:
 
         self.__states.append(self.__other_grid.copy())
 
+        self.__frontier = len(frontier)
+        self.__visited += len(discard)
         while len(frontier) != 0:
             new_frontier = []
+            self.__frontier -= 1
             self.__shortest_path += 1
 
             if self.__shortest_path & 1 == 0:
@@ -385,6 +394,8 @@ class Graph:
 
                         if self.__grid[new_x][new_y] == Graph.Status.GOAL.value:
                             self.__parent[new_x][new_y] = (x, y)
+                            for f_x, f_y in frontier:
+                                self.__grid[f_x][f_y] = Graph.Status.FRONTIER.value
                             self.__display()
                             return
 
@@ -418,6 +429,10 @@ class Graph:
 
                         if self.__other_grid[new_x][new_y] == Graph.Status.GOAL.value:
                             self.__parent[new_x][new_y] = (x, y)
+                            for f_x, f_y in frontier:
+                                self.__other_grid[f_x][
+                                    f_y
+                                ] = Graph.Status.FRONTIER.value
                             self.__display()
                             return
 
@@ -445,6 +460,8 @@ class Graph:
                 self.__states.append(self.__other_grid.copy())
 
             frontier = new_frontier
+            self.__frontier = len(frontier)
+            self.__visited += len(discard)
 
         self.__give_up()
 
@@ -452,6 +469,6 @@ class Graph:
     def __give_up(self) -> None:
         print(f"BFS with moving obstacles.")
         print("No path found.")
-        print(f"Visited: {self.__visited} nodes.")
+        print(f"Opened: {self.__visited} nodes.")
 
         self.__output_animation()

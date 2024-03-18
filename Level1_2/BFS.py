@@ -12,6 +12,7 @@ try:
 except Exception as e:
     print(repr(e))
     quit()
+print()
 
 
 expanded = graph.expand()

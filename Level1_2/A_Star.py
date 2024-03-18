@@ -10,6 +10,8 @@ try:
 except Exception as e:
     print(repr(e))
     quit()
+print()
+
 
 start = graph.get_start()
 f = {start: (0, 0)}

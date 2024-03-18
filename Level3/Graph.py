@@ -239,6 +239,9 @@ class Graph:
     def add_state(self) -> None:
         self.__states.append(self.__grid.copy())
 
+        for x, y in self.__stops:
+            self.__grid[x][y] = Graph.Status.STOP.value
+
     def set_path(self, p: tuple) -> None:
         x, y = p
         if (
