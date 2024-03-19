@@ -64,7 +64,7 @@ for point in stops_inorder:
     print(f"-> {tuple(reversed(point))}", end=" ")
 print(f"-> {tuple(reversed(goal))}.")
 
-print(f"Path length: {total_cost}.")
+print(f"Path length: {final_cost}.")
 
 
 for segment in final_path:

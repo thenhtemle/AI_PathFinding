@@ -241,6 +241,8 @@ class Graph:
 
         for x, y in self.__stops:
             self.__grid[x][y] = Graph.Status.STOP.value
+        x, y = self.__start
+        self.__grid[x][y] = Graph.Status.START.value
 
     def set_path(self, p: tuple) -> None:
         x, y = p
