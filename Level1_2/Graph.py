@@ -193,7 +193,8 @@ class Graph:
             pyplot.grid()
             self.__map.gca().invert_yaxis()
             self.__visited = 1
-            self.__opened = int(algorithm == "A_Star")
+            self.__is_a_star = int(algorithm == "A_Star")
+            self.__opened = self.__is_a_star
             self.__states = [self.__grid.copy()]
 
             output_path = input("Enter the name of the output file (no extension): ")
@@ -221,6 +222,7 @@ class Graph:
         pyplot.close()
 
     def __display(self):
+        self.__visited += 1
         shorted_len = 0
 
         x, y = self.__goal
@@ -235,7 +237,7 @@ class Graph:
         print(f"Algorithm: {self.__algorithm}.")
         print(f"Path length: {shorted_len}.")
         print(
-            f"Visited: {self.__visited} nodes ({self.__opened} opened nodes, {self.__visited - self.__opened} frontiers)."
+            f"Visited: {self.__visited} nodes ({self.__opened} opened nodes, {self.__visited - self.__opened - 1 + self.__is_a_star} frontiers)."
         )
 
         self.__output_animation()
