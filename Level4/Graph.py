@@ -338,7 +338,7 @@ class Graph:
         print(f"BFS with moving obstacles.")
         print(f"Path length: {self.__shortest_path}.")
         print(
-            f"Visited: {self.__visited} nodes ({self.__visited - self.__frontier} opened nodes, {self.__frontier} frontiers)."
+            f"Visited: {self.__visited + 1} nodes ({self.__visited - self.__frontier} opened nodes, {self.__frontier} frontiers)."
         )
 
         self.__output_animation()
