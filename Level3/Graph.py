@@ -222,6 +222,7 @@ class Graph:
         output_file = rf"{self.__output_path}.gif"
         anim.save(output_file, writer="pillow")
         print(f"Animation saved to {output_file}.")
+        pyplot.savefig(rf"{self.__output_path}.png")
         pyplot.close()
 
     # Hàm get_start: trả về điểm bắt đầu của đồ thị

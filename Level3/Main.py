@@ -25,6 +25,9 @@ for point1 in graph_points:
     for point2 in graph_points:
         movement = graph.find_shortest_path(point1, point2)
         distance_matrix[point1][point2] = movement
+        tmp = movement[1] if movement is not None else None
+        print(f"{point1} -> {point2}: {tmp}")
+    print()
 
 final_path = []
 final_cost = float("inf")
