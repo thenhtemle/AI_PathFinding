@@ -317,23 +317,28 @@ class Graph:
         pyplot.close()
 
     def __display(self):
-        shorted_len = self.__shortest_path
+        path = []
 
         x, y = self.__goal
         while (x, y) != self.__start:
-            self.__grid[x][y] = Graph.Status.PATH.value
-            self.__other_grid[x][y] = Graph.Status.PATH.value
-
-            if shorted_len & 1 == 0:
-                self.__states.append(self.__grid.copy())
-            else:
-                self.__states.append(self.__other_grid.copy())
-
-            shorted_len -= 1
+            path.append((x, y))
             x, y = self.__parent[x][y]
 
+        path = reversed(path)
+        x, y = self.__start
         self.__grid[x][y] = Graph.Status.PATH.value
         self.__states.append(self.__grid.copy())
+
+        self.__grid[x][y] = Graph.Status.START.value
+        for i, (next_x, next_y) in enumerate(path):
+            if i & 1 == 0:
+                self.__other_grid[next_x][next_y] = Graph.Status.PATH.value
+                self.__states.append(self.__other_grid.copy())
+                self.__other_grid[next_x][next_y] = Graph.Status.EXPLORED.value
+            else:
+                self.__grid[next_x][next_y] = Graph.Status.PATH.value
+                self.__states.append(self.__grid.copy())
+                self.__grid[next_x][next_y] = Graph.Status.EXPLORED.value
 
         print(f"BFS with moving obstacles.")
         print(f"Path length: {self.__shortest_path}.")
@@ -352,17 +357,21 @@ class Graph:
             new_x = x + dx
             new_y = y + dy
 
-            if self.__other_grid[new_x][new_y] == Graph.Status.OBSTACLE.value:
-                pass
+            if (
+                self.__other_grid[new_x][new_y] == Graph.Status.OBSTACLE.value
+                or self.__other_grid[new_x][new_y] == Graph.Status.WALL.value
+            ):
+                continue
 
             self.__parent[new_x][new_y] = self.__start
             if self.__other_grid[new_x][new_y] == Graph.Status.GOAL.value:
                 for f_x, f_y in frontier:
                     self.__grid[f_x][f_y] = Graph.Status.FRONTIER.value
-                self.__frontier = len(frontier)
+                self.__frontier = len(frontier) + len(discard)
                 self.__display()
                 return
 
+            self.__visited += 1
             self.__other_grid[new_x][new_y] = Graph.Status.FRONTIER.value
 
             if self.__movement_matrix[new_x][new_y]:
@@ -371,20 +380,49 @@ class Graph:
                 frontier.append((new_x, new_y))
 
         self.__states.append(self.__other_grid.copy())
+        self.__frontier = len(frontier) + len(discard)
 
-        self.__frontier = len(frontier)
-        self.__visited += len(discard)
         while len(frontier) != 0:
             new_frontier = []
-            self.__frontier -= 1
             self.__shortest_path += 1
 
             if self.__shortest_path & 1 == 0:
                 for x, y in discard:
-                    self.__other_grid[x][y] = Graph.Status.UNEXPLORED.value
+                    self.__frontier -= 1
+                    self.__other_grid[x][y] = Graph.Status.EXPLORED.value
+                    for dx, dy in self.__direction:
+                        new_x = x + dx
+                        new_y = y + dy
+
+                        if self.__grid[new_x][new_y] == Graph.Status.GOAL.value:
+                            self.__frontier += len(new_frontier)
+                            self.__parent[new_x][new_y] = (x, y)
+
+                            for f_x, f_y in new_frontier:
+                                self.__grid[f_x][f_y] = Graph.Status.FRONTIER.value
+                                self.__other_grid[f_x][
+                                    f_y
+                                ] = Graph.Status.FRONTIER.value
+
+                            self.__display()
+                            return
+
+                        if (
+                            not self.__movement_matrix[new_x][new_y]
+                            and self.__grid[new_x][new_y]
+                            == Graph.Status.UNEXPLORED.value
+                        ):
+                            new_frontier.append((new_x, new_y))
+                            self.__visited += 1
+                            self.__parent[new_x][new_y] = (x, y)
+                            self.__grid[new_x][new_y] = Graph.Status.FRONTIER.value
+                            self.__other_grid[new_x][
+                                new_y
+                            ] = Graph.Status.FRONTIER.value
                 discard.clear()
 
                 for x, y in frontier:
+                    self.__frontier -= 1
                     self.__grid[x][y] = Graph.Status.EXPLORED.value
                     self.__other_grid[x][y] = Graph.Status.EXPLORED.value
 
@@ -393,33 +431,77 @@ class Graph:
                         new_y = y + dy
 
                         if self.__grid[new_x][new_y] == Graph.Status.GOAL.value:
+                            self.__frontier += len(new_frontier) + len(discard)
                             self.__parent[new_x][new_y] = (x, y)
-                            for f_x, f_y in frontier:
+
+                            for f_x, f_y in new_frontier:
                                 self.__grid[f_x][f_y] = Graph.Status.FRONTIER.value
+                                self.__other_grid[f_x][
+                                    f_y
+                                ] = Graph.Status.FRONTIER.value
+
                             self.__display()
                             return
 
-                        if self.__grid[new_x][new_y] == Graph.Status.OBSTACLE.value:
-                            pass
+                        if (
+                            self.__grid[new_x][new_y] == Graph.Status.OBSTACLE.value
+                            or self.__grid[new_x][new_y] == Graph.Status.WALL.value
+                        ):
+                            continue
 
                         if self.__grid[new_x][new_y] == Graph.Status.UNEXPLORED.value:
                             self.__visited += 1
                             self.__grid[new_x][new_y] = Graph.Status.FRONTIER.value
 
+                            self.__parent[new_x][new_y] = (x, y)
                             if self.__movement_matrix[new_x][new_y]:
                                 discard.append((new_x, new_y))
                             else:
                                 new_frontier.append((new_x, new_y))
-                                self.__parent[new_x][new_y] = (x, y)
+                                self.__other_grid[new_x][
+                                    new_y
+                                ] = Graph.Status.FRONTIER.value
 
                 self.__states.append(self.__grid.copy())
 
             else:
                 for x, y in discard:
-                    self.__grid[x][y] = Graph.Status.UNEXPLORED.value
+                    self.__frontier -= 1
+                    self.__grid[x][y] = Graph.Status.EXPLORED.value
+                    for dx, dy in self.__direction:
+                        new_x = x + dx
+                        new_y = y + dy
+
+                        if self.__other_grid[new_x][new_y] == Graph.Status.GOAL.value:
+                            self.__frontier += len(new_frontier)
+                            self.__parent[new_x][new_y] = (x, y)
+
+                            for f_x, f_y in new_frontier:
+                                self.__grid[f_x][f_y] = Graph.Status.FRONTIER.value
+                                self.__other_grid[f_x][
+                                    f_y
+                                ] = Graph.Status.FRONTIER.value
+
+                            self.__display()
+                            return
+
+                        if (
+                            not self.__movement_matrix[new_x][new_y]
+                            and self.__other_grid[new_x][new_y]
+                            == Graph.Status.UNEXPLORED.value
+                        ):
+                            new_frontier.append((new_x, new_y))
+                            self.__visited += 1
+                            self.__parent[new_x][new_y] = (x, y)
+
+                            self.__grid[new_x][new_y] = Graph.Status.FRONTIER.value
+                            self.__other_grid[new_x][
+                                new_y
+                            ] = Graph.Status.FRONTIER.value
                 discard.clear()
 
                 for x, y in frontier:
+                    self.__frontier -= 1
                     self.__grid[x][y] = Graph.Status.EXPLORED.value
                     self.__other_grid[x][y] = Graph.Status.EXPLORED.value
 
@@ -428,19 +510,25 @@ class Graph:
                         new_y = y + dy
 
                         if self.__other_grid[new_x][new_y] == Graph.Status.GOAL.value:
+                            self.__frontier += len(new_frontier) + len(discard)
                             self.__parent[new_x][new_y] = (x, y)
-                            for f_x, f_y in frontier:
+
+                            for f_x, f_y in new_frontier:
+                                self.__grid[f_x][f_y] = Graph.Status.FRONTIER.value
                                 self.__other_grid[f_x][
                                     f_y
                                 ] = Graph.Status.FRONTIER.value
+
                             self.__display()
                             return
 
                         if (
                             self.__other_grid[new_x][new_y]
                             == Graph.Status.OBSTACLE.value
+                            or self.__other_grid[new_x][new_y]
+                            == Graph.Status.WALL.value
                         ):
-                            pass
+                            continue
 
                         if (
                             self.__other_grid[new_x][new_y]
@@ -451,16 +539,17 @@ class Graph:
                                 new_y
                             ] = Graph.Status.FRONTIER.value
 
+                            self.__parent[new_x][new_y] = (x, y)
                             if self.__movement_matrix[new_x][new_y]:
                                 discard.append((new_x, new_y))
                             else:
                                 new_frontier.append((new_x, new_y))
-                                self.__parent[new_x][new_y] = (x, y)
+                                self.__grid[new_x][new_y] = Graph.Status.FRONTIER.value
 
                 self.__states.append(self.__other_grid.copy())
 
             frontier = new_frontier
-            self.__frontier = len(frontier)
+            self.__frontier = len(frontier) + len(discard)
             self.__visited += len(discard)
 
         self.__give_up()
