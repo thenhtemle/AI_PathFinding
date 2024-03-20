@@ -1,3 +1,4 @@
+from audioop import reverse
 from enum import Enum
 import numpy as np
 from matplotlib import pyplot, colors
@@ -223,19 +224,25 @@ class Graph:
 
     def __display(self):
         self.__visited += 1
-        shorted_len = 0
-
+        path_len = 0
         x, y = self.__goal
+        path = [(x, y)]
+
         while (x, y) != self.__start:
-            shorted_len += 1
-            self.__grid[x][y] = Graph.Status.PATH.value
-            self.__states.append(self.__grid.copy())
+            path_len += 1
+            path.append((x, y))
             x, y = self.__parent[x][y]
+
+        path = reversed(path)
         self.__grid[x][y] = Graph.Status.PATH.value
         self.__states.append(self.__grid.copy())
+        
+        for x, y in path:
+            self.__grid[x][y] = Graph.Status.PATH.value
+            self.__states.append(self.__grid.copy())
 
         print(f"Algorithm: {self.__algorithm}.")
-        print(f"Path length: {shorted_len}.")
+        print(f"Path length: {path_len}.")
         print(
             f"Visited: {self.__visited} nodes ({self.__opened} opened nodes, {self.__visited - self.__opened - 1 + self.__is_a_star} frontiers)."
         )
