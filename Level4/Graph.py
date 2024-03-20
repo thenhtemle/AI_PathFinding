@@ -382,7 +382,7 @@ class Graph:
         self.__states.append(self.__other_grid.copy())
         self.__frontier = len(frontier) + len(discard)
 
-        while len(frontier) != 0:
+        while self.__frontier != 0:
             new_frontier = []
             self.__shortest_path += 1
 
