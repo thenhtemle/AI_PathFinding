@@ -1,3 +1,4 @@
+# YÊU CẦU
 Cho một bản đồ phẳng xOy (góc phần tư I), trên đó người ta đặt một điểm bắt đầu
  S(xs, ys) và một điểm đích đến G(xG,yG). Đồng thời đặt các chướng ngại vật là các hình
  đa giác lồi sao cho các đa giác không được đặt chồng lên nhau hay có điểm chung.
