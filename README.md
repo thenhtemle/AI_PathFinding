@@ -24,3 +24,5 @@ với gốc tọa độ, độ dày của khung là 1 đơn vị. Không có đi
  đảm bảo không đè lên đa giác khác. Chạy ít nhất 1 thuật toán trên đó. Quay
  video và đính kèm trực tiếp/link vào báo cáo.
 - **Mức 5(điểm cộng 10%):** thể hiện mô hình trên không gian 3 chiều (3D).
+
+# Nếu bạn sử dụng code của repo này, vui lòng ghi nguồn đầy đủ và rõ ràng.
